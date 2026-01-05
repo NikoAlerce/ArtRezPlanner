@@ -1,0 +1,77 @@
+
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ArtRes Planner</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" crossorigin="anonymous">
+    <style>
+      body {
+        font-family: 'Inter', sans-serif;
+        background-color: #fcfbf7;
+      }
+      .custom-scrollbar::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+      }
+      .custom-scrollbar::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: #e2e8f0;
+        border-radius: 10px;
+      }
+      .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+        background: #cbd5e1;
+      }
+
+      @media print {
+        @page {
+          size: landscape;
+          margin: 10mm;
+        }
+        body {
+          background-color: white !important;
+          padding: 0 !important;
+        }
+        .print-no-break {
+          break-inside: avoid;
+        }
+        .overflow-x-auto {
+          overflow: visible !important;
+        }
+        .flex {
+          display: flex !important;
+          flex-wrap: nowrap !important;
+        }
+        .min-w-\[1200px\] {
+          min-width: auto !important;
+          width: 100% !important;
+        }
+        .min-w-\[220px\] {
+          min-width: 0 !important;
+          flex: 1 !important;
+        }
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@^19.2.3",
+    "react-dom": "https://esm.sh/react-dom@^19.2.3",
+    "react-dom/client": "https://esm.sh/react-dom@^19.2.3/client",
+    "html-to-image": "https://esm.sh/html-to-image@1.11.11",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "react/": "https://esm.sh/react@^19.2.3/"
+  }
+}
+</script>
+</head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>
