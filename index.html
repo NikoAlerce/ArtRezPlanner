@@ -7,7 +7,7 @@
     <title>Bosque Art Residency Summer 26 Cronograma</title>
     
     <!-- PWA Meta Tags -->
-    <link rel="manifest" href="./manifest.json" />
+    <link rel="manifest" href="manifest.json" />
     <meta name="theme-color" content="#1a2f23" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -94,6 +94,17 @@
         body::before, .forest-particle { display: none !important; }
       }
     </style>
+    <script>
+      // CAPTURA GLOBAL DEL EVENTO DE INSTALACIÓN
+      window.deferredPrompt = null;
+      window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        window.deferredPrompt = e;
+        console.log('Evento beforeinstallprompt capturado globalmente');
+        // Notificar a React si ya cargó
+        window.dispatchEvent(new CustomEvent('pwa-prompt-ready'));
+      });
+    </script>
     <script type="importmap">
     {
       "imports": {
@@ -125,10 +136,10 @@
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('./sw.js').then(reg => {
-            console.log('Service Worker registrado con éxito:', reg.scope);
+          navigator.serviceWorker.register('sw.js').then(reg => {
+            console.log('Service Worker registrado:', reg.scope);
           }).catch(err => {
-            console.log('Fallo al registrar Service Worker:', err);
+            console.log('Error al registrar SW:', err);
           });
         });
       }

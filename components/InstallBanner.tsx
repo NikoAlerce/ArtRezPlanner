@@ -3,55 +3,64 @@ import React, { useState, useEffect } from 'react';
 
 const InstallBanner: React.FC = () => {
   const [isVisible, setIsVisible] = useState(false);
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [promptReady, setPromptReady] = useState(false);
 
   useEffect(() => {
-    // 1. No mostrar si ya está instalada
+    // 1. Verificar si ya está instalada
     const isStandalone = 
       window.matchMedia('(display-mode: standalone)').matches || 
-      (window.navigator as any).standalone;
+      (window.navigator as any).standalone === true;
 
     if (isStandalone) return;
 
-    // 2. Capturar el evento de instalación del navegador
-    const handleBeforeInstallPrompt = (e: any) => {
-      e.preventDefault();
-      setDeferredPrompt(e);
-      setIsVisible(true);
+    // 2. Función para actualizar el estado según el prompt global
+    const checkPrompt = () => {
+      if ((window as any).deferredPrompt) {
+        setPromptReady(true);
+        setIsVisible(true);
+      }
     };
 
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    // 3. Suscribirse a eventos de prompt listo
+    window.addEventListener('pwa-prompt-ready', checkPrompt);
+    
+    // Revisar si ya existe el prompt (capturado en index.html)
+    checkPrompt();
 
-    // 3. Forzar visibilidad después de 1 segundo para dispositivos móviles/tablets
+    // 4. Forzar visibilidad en móviles tras un pequeño delay si no se ha detectado el prompt
     const timer = setTimeout(() => {
       const isMobile = /android|iphone|ipad|ipod/i.test(navigator.userAgent.toLowerCase());
       if (isMobile && !isStandalone) {
         setIsVisible(true);
       }
-    }, 1000);
+    }, 2000);
 
     return () => {
-      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener('pwa-prompt-ready', checkPrompt);
       clearTimeout(timer);
     };
   }, []);
 
   const handleInstallClick = async () => {
+    const deferredPrompt = (window as any).deferredPrompt;
+    
     if (deferredPrompt) {
-      // Disparar diálogo nativo de instalación
+      console.log('Disparando prompt de instalación...');
       deferredPrompt.prompt();
+      
       const { outcome } = await deferredPrompt.userChoice;
+      console.log(`Resultado de instalación: ${outcome}`);
+      
       if (outcome === 'accepted') {
         setIsVisible(false);
+        (window as any).deferredPrompt = null;
       }
-      setDeferredPrompt(null);
     } else {
-      // Si el evento no ha llegado (común en Samsung/Chrome al inicio), 
-      // avisamos al usuario que el sistema se está abriendo.
-      // En muchos navegadores modernos, esto fuerza la aparición del prompt.
-      console.log("Intentando forzar instalación...");
-      // Nota técnica: Sin el evento 'beforeinstallprompt' no se puede forzar el diálogo nativo por seguridad,
-      // pero al dejar el botón activo evitamos la frustración del usuario.
+      // Si no hay prompt nativo, no podemos forzarlo, pero intentamos 
+      // avisar al sistema a través de un log. En Android, esto a veces
+      // ayuda a que el navegador muestre su propio banner de "Instalar".
+      console.warn('El navegador aún no permite la instalación automática.');
+      alert("Para instalar, busca 'Instalar aplicación' en el menú de tu navegador (los tres puntos arriba a la derecha).");
     }
   };
 
@@ -60,7 +69,6 @@ const InstallBanner: React.FC = () => {
   return (
     <div className="fixed top-4 left-4 right-4 z-[200] animate-in slide-in-from-top-full duration-700 pointer-events-none">
       <div className="bg-[#1a2f23] text-white p-5 rounded-[2.5rem] shadow-2xl border border-white/10 relative overflow-hidden group pointer-events-auto">
-        {/* Decoración de fondo */}
         <div className="absolute -right-8 -top-8 w-32 h-32 bg-white/5 rounded-full blur-2xl"></div>
         
         <div className="flex items-center gap-4 relative z-10">
