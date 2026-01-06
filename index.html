@@ -36,7 +36,6 @@
         -webkit-tap-highlight-color: transparent;
       }
 
-      /* Textura de papel artístico */
       body::before {
         content: "";
         position: fixed;
@@ -95,14 +94,15 @@
       }
     </style>
     <script>
-      // CAPTURA GLOBAL DEL EVENTO DE INSTALACIÓN
+      // CAPTURA GLOBAL ROBUSTA
       window.deferredPrompt = null;
       window.addEventListener('beforeinstallprompt', (e) => {
+        // Prevenir que el navegador lo muestre automáticamente para que nosotros controlemos el botón
         e.preventDefault();
         window.deferredPrompt = e;
-        console.log('Evento beforeinstallprompt capturado globalmente');
-        // Notificar a React si ya cargó
-        window.dispatchEvent(new CustomEvent('pwa-prompt-ready'));
+        console.log('Evento de instalación capturado y listo para el botón');
+        // Notificar a la app de React que el botón ahora puede ser "Automático"
+        window.dispatchEvent(new CustomEvent('pwa-can-install'));
       });
     </script>
     <script type="importmap">
@@ -119,7 +119,6 @@
     </script>
   </head>
   <body>
-    <!-- Partículas ambientales -->
     <div class="fixed inset-0 overflow-hidden pointer-events-none z-0">
       <div class="forest-particle" style="bottom: -20px; left: 15%; animation: float-forest 12s linear infinite;">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="#2d4f3c11"><path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z"/></svg>
@@ -132,12 +131,11 @@
     <div id="root" class="relative z-10"></div>
     <script type="module" src="./index.tsx"></script>
     
-    <!-- Registro del Service Worker -->
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('sw.js').then(reg => {
-            console.log('Service Worker registrado:', reg.scope);
+          navigator.serviceWorker.register('sw.js', { scope: '/' }).then(reg => {
+            console.log('Service Worker registrado con éxito');
           }).catch(err => {
             console.log('Error al registrar SW:', err);
           });
