@@ -75,10 +75,7 @@ const App: React.FC = () => {
   };
 
   const handleReset = () => {
-    const msg = activeTab === 'artistic' 
-      ? '¿Restablecer el organigrama artístico original?' 
-      : '¿Restablecer el organigrama de producción con la rotación equitativa?';
-    
+    const msg = '¿Restablecer organigrama?';
     if (confirm(msg)) {
       if (activeTab === 'artistic') setSchedule(INITIAL_DATA);
       else setProduction(INITIAL_PRODUCTION_DATA);
@@ -89,10 +86,10 @@ const App: React.FC = () => {
     if (!containerRef.current) return;
     setIsExporting(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 300));
+      await new Promise(resolve => setTimeout(resolve, 500));
       const element = containerRef.current;
       const dataUrl = await toPng(element, {
-        backgroundColor: '#fcfbf7',
+        backgroundColor: '#fdfaf6',
         width: element.scrollWidth,
         height: element.scrollHeight,
         style: { padding: '40px', width: `${element.scrollWidth}px`, overflow: 'visible' },
@@ -100,11 +97,11 @@ const App: React.FC = () => {
         cacheBust: true,
       });
       const link = document.createElement('a');
-      link.download = `organigrama-${activeTab}-${new Date().toISOString().split('T')[0]}.png`;
+      link.download = `bosque-${activeTab}.png`;
       link.href = dataUrl;
       link.click();
     } catch (err) {
-      alert('Error al exportar. Prueba imprimir como PDF.');
+      alert('Error exportando.');
     } finally {
       setIsExporting(false);
     }
@@ -125,25 +122,19 @@ const App: React.FC = () => {
 
   const getAssigneeColor = (name: Producer) => {
     switch(name) {
-      case 'Rocío': return 'bg-pink-100 text-pink-700 border-pink-200 ring-pink-500/20';
-      case 'Nicolás': return 'bg-sky-100 text-sky-700 border-sky-200 ring-sky-500/20';
-      case 'Mariano': return 'bg-emerald-100 text-emerald-700 border-emerald-200 ring-emerald-500/20';
-      default: return 'bg-gray-100 text-gray-400 border-gray-200';
+      case 'Rocío': return 'bg-pink-50 text-pink-700 border-pink-100';
+      case 'Nicolás': return 'bg-blue-50 text-blue-700 border-blue-100';
+      case 'Mariano': return 'bg-emerald-50 text-emerald-700 border-emerald-100';
+      default: return 'bg-stone-50 text-stone-400 border-stone-100';
     }
   };
 
-  const getDisplayName = (name: Producer) => {
-    if (name === 'Nicolás') return 'Alerce';
-    return name;
-  };
-
-  // If we are in production and not logged in, show login screen
   if (activeTab === 'production' && !currentUser) {
     return <Login onLogin={setCurrentUser} />;
   }
 
   return (
-    <div className="min-h-screen p-4 md:p-8 max-w-[1600px] mx-auto overflow-x-hidden selection:bg-orange-100 selection:text-orange-900">
+    <div className="min-h-screen p-4 md:p-8 max-w-[1600px] mx-auto overflow-x-hidden selection:bg-[#2d4f3c11] relative">
       <Header 
         activeTab={activeTab} 
         setActiveTab={setActiveTab} 
@@ -151,49 +142,54 @@ const App: React.FC = () => {
         onReset={handleReset} 
       />
 
-      <main className="relative">
+      <main className="relative mt-4 z-10">
         {activeTab === 'artistic' ? (
-          <div ref={containerRef} className={`custom-scrollbar pb-6 -mx-4 px-4 ${isExporting ? 'overflow-visible bg-[#fcfbf7]' : 'overflow-x-auto'}`}>
-            <div className={`flex gap-4 ${isExporting ? 'w-fit' : 'min-w-[1400px]'}`}>
+          <div ref={containerRef} className={`custom-scrollbar pb-6 -mx-4 px-4 ${isExporting ? 'overflow-visible' : 'overflow-x-auto'}`}>
+            <div className={`flex gap-4 ${isExporting ? 'w-fit' : 'min-w-[1200px]'}`}>
               {daysOrder.map((dayId) => {
                 const day = schedule[dayId];
                 if (!day) return null;
                 return (
-                  <div key={dayId} className="flex-1 min-w-[240px] bg-white rounded-3xl shadow-sm border border-gray-100 flex flex-col group overflow-hidden hover:shadow-xl transition-all duration-300">
-                    <div className="p-5 bg-gradient-to-br from-gray-50 to-white border-b border-gray-100 flex justify-between items-start">
-                      <div>
-                        <h3 className="text-xl font-black text-gray-900 uppercase tracking-tight">{day.name}</h3>
-                        <span className="text-4xl font-black text-orange-500 leading-none">{day.date}</span>
+                  <div key={dayId} className="flex-1 min-w-[260px] bg-white/70 backdrop-blur-sm rounded-[2rem] border border-stone-200/40 shadow-sm flex flex-col group overflow-hidden hover:shadow-xl hover:-translate-y-2 transition-all duration-500">
+                    <div className="p-6 bg-gradient-to-br from-stone-50 to-white border-b border-stone-100 flex justify-between items-start">
+                      <div className="space-y-0.5">
+                        <h3 className="text-[10px] font-black text-[#2d4f3c] uppercase tracking-[0.3em]">{day.name}</h3>
+                        <div className="flex items-baseline gap-1.5">
+                          <span className="text-4xl font-serif font-black text-[#1a2f23] tracking-tighter">{day.date}</span>
+                          <span className="text-stone-300 font-serif italic text-sm">Ene</span>
+                        </div>
                       </div>
-                      <button onClick={() => setEditingDay(day)} className="p-2.5 rounded-2xl text-gray-400 hover:text-orange-600 hover:bg-orange-50 transition-all opacity-0 group-hover:opacity-100 focus:opacity-100 print:hidden">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                      <button onClick={() => setEditingDay(day)} className="p-2 rounded-xl text-stone-300 hover:text-[#2d4f3c] hover:bg-white transition-all opacity-0 group-hover:opacity-100 print:hidden">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
                       </button>
                     </div>
-                    <div className="p-6 flex flex-col gap-6">
-                      <div className="space-y-2">
-                        <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] flex items-center gap-2">
-                          <span className="w-1.5 h-1.5 rounded-full bg-orange-400 animate-pulse"></span> Almuerzo
-                        </h4>
-                        <p className="text-gray-700 font-medium italic text-sm leading-relaxed">{day.lunch || "—"}</p>
+                    
+                    <div className="p-6 space-y-6 flex-grow relative">
+                      <div className="space-y-2 relative z-10">
+                        <div className="flex items-center gap-2">
+                           <div className="w-1.5 h-1.5 rounded-full bg-orange-400"></div>
+                           <span className="text-[9px] font-black uppercase tracking-widest text-orange-600/60">Almuerzo</span>
+                        </div>
+                        <p className="text-[#1a2f23] font-serif italic text-base leading-snug">{day.lunch || "..."}</p>
                       </div>
-                      <div className="h-px bg-gradient-to-r from-transparent via-gray-100 to-transparent" />
-                      <div className="space-y-2">
-                        <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] flex items-center gap-2">
-                          <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span> Cena
-                        </h4>
-                        <p className="text-gray-700 font-medium italic text-sm leading-relaxed">{day.dinner || "—"}</p>
+                      
+                      <div className="space-y-2 relative z-10">
+                        <div className="flex items-center gap-2">
+                           <div className="w-1.5 h-1.5 rounded-full bg-blue-400"></div>
+                           <span className="text-[9px] font-black uppercase tracking-widest text-blue-600/60">Cena</span>
+                        </div>
+                        <p className="text-[#1a2f23] font-serif italic text-base leading-snug">{day.dinner || "..."}</p>
                       </div>
                     </div>
-                    <div className="bg-orange-50/50 p-6 flex-1 border-t border-orange-100/50 flex flex-col gap-5">
-                      <h4 className="text-[10px] font-black text-orange-500 uppercase tracking-[0.25em]">Actividades</h4>
-                      <div className="space-y-1">
-                        <span className="text-[9px] font-black text-orange-400/70 uppercase">Mañana</span>
-                        <p className="text-gray-900 font-bold text-sm leading-tight">{day.morningActivities || "—"}</p>
+
+                    <div className="bg-[#1a2f23] p-6 text-white space-y-4">
+                      <div className="space-y-1 relative z-10">
+                        <span className="text-[9px] font-bold text-stone-500 uppercase tracking-widest">Mañana</span>
+                        <p className="font-bold text-sm leading-tight text-stone-200">{day.morningActivities || "Espacio"}</p>
                       </div>
-                      <div className="h-px border-t border-dashed border-orange-200" />
-                      <div className="space-y-1">
-                        <span className="text-[9px] font-black text-orange-400/70 uppercase">Tarde</span>
-                        <p className="text-gray-900 font-bold text-sm leading-tight">{day.afternoonActivities || "—"}</p>
+                      <div className="space-y-1 relative z-10">
+                        <span className="text-[9px] font-bold text-stone-500 uppercase tracking-widest">Tarde</span>
+                        <p className="font-bold text-sm leading-tight text-stone-200">{day.afternoonActivities || "Conexión"}</p>
                       </div>
                     </div>
                   </div>
@@ -212,41 +208,33 @@ const App: React.FC = () => {
       </main>
 
       {activeTab === 'production' && (
-        <section className="mt-12 bg-white rounded-[2.5rem] p-8 border border-gray-100 shadow-xl shadow-blue-900/5 print:hidden">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
-            <div>
-              <h2 className="text-2xl font-black text-gray-900 flex items-center gap-3">
-                <div className="p-2 bg-blue-600 rounded-xl text-white">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-                </div>
-                Carga Semanal del Equipo
-              </h2>
-              <p className="text-gray-500 font-medium mt-1">Estadísticas de cumplimiento y distribución de tareas</p>
-            </div>
+        <section className="mt-8 glass rounded-[2rem] p-8 border border-white/50 shadow-lg print:hidden animate-in fade-in duration-700">
+          <div className="mb-6">
+            <h2 className="text-xl font-black text-[#1a2f23] flex items-center gap-3">
+              Estadísticas de Cuidado
+            </h2>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {['Rocío', 'Nicolás', 'Mariano'].map((name) => {
               const stats = prodStats[name] || { total: 0, completed: 0 };
-              const producerName = name as Producer;
+              const prodName = name as Producer;
               return (
-                <div key={name} className="relative bg-gray-50/50 p-6 rounded-3xl border border-gray-100 transition-all hover:border-blue-200">
-                  <div className="flex items-center justify-between mb-4">
-                    <span className={`px-4 py-1.5 rounded-2xl text-sm font-black border shadow-sm ${getAssigneeColor(producerName)}`}>
-                      {getDisplayName(producerName)}
+                <div key={name} className="bg-white/40 p-5 rounded-2xl border border-stone-100 flex items-center justify-between group">
+                  <div className="space-y-1">
+                    <span className={`px-3 py-1 rounded-full text-[9px] font-black border uppercase tracking-widest ${getAssigneeColor(prodName)}`}>
+                      {name === 'Nicolás' ? 'Alerce' : name}
                     </span>
-                    <div className="flex items-baseline gap-1">
-                      <span className="text-4xl font-black text-gray-900">
-                        {stats.completed}
-                      </span>
-                      <span className="text-gray-400 font-bold text-xs uppercase">/ {stats.total} Hechas</span>
+                    <div className="w-32 bg-stone-100 h-1.5 rounded-full overflow-hidden mt-2">
+                      <div 
+                        className="h-full bg-[#3a5a6b] rounded-full transition-all duration-700"
+                        style={{ width: `${stats.total > 0 ? (stats.completed / stats.total) * 100 : 0}%` }}
+                      />
                     </div>
                   </div>
-                  <div className="w-full bg-gray-200 h-2 rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-emerald-500 transition-all duration-700 ease-out"
-                      style={{ width: `${stats.total > 0 ? (stats.completed / stats.total) * 100 : 0}%` }}
-                    />
+                  <div className="text-right">
+                    <span className="text-2xl font-black text-[#1a2f23]">{stats.completed}</span>
+                    <span className="text-stone-300 font-bold text-[10px] ml-1">/ {stats.total}</span>
                   </div>
                 </div>
               );
@@ -259,12 +247,11 @@ const App: React.FC = () => {
       {editingProdDay && <EditProductionModal day={editingProdDay} onClose={() => setEditingProdDay(null)} onSave={handleUpdateProdDay} />}
 
       {isExporting && (
-        <div className="fixed inset-0 z-[100] bg-white/95 backdrop-blur-xl flex flex-col items-center justify-center">
-          <div className={`w-20 h-20 border-8 border-t-transparent rounded-full animate-spin mb-8 ${activeTab === 'artistic' ? 'border-orange-500' : 'border-blue-600'}`}></div>
-          <p className={`font-black text-3xl animate-pulse tracking-tight ${activeTab === 'artistic' ? 'text-orange-600' : 'text-blue-800'}`}>
-            PROCESANDO SEMANA...
-          </p>
-          <p className="text-gray-400 font-medium mt-4">Generando imagen en alta resolución</p>
+        <div className="fixed inset-0 z-[100] bg-[#fdfaf6]/95 backdrop-blur-xl flex flex-col items-center justify-center">
+          <div className="w-16 h-16 mb-4 animate-sway">
+             <svg width="64" height="64" viewBox="0 0 24 24" fill="#2d4f3c"><path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z"/></svg>
+          </div>
+          <p className="text-xs font-black text-[#1a2f23] uppercase tracking-widest animate-pulse">Revelando el Arte...</p>
         </div>
       )}
     </div>
