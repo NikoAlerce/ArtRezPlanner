@@ -1,5 +1,5 @@
 
-const CACHE_NAME = 'bosque-v2';
+const CACHE_NAME = 'bosque-v3-reset';
 const ASSETS = [
   './',
   './index.html',

@@ -3,41 +3,64 @@ import React, { useState, useEffect } from 'react';
 
 const InstallBanner: React.FC = () => {
   const [isVisible, setIsVisible] = useState(false);
+  const [installPrompt, setInstallPrompt] = useState<any>(null);
 
   useEffect(() => {
-    // 1. Verificar si ya está en modo App (Standalone)
+    // 1. Revisar si ya está instalada
     const isStandalone = 
       window.matchMedia('(display-mode: standalone)').matches || 
       (window.navigator as any).standalone === true;
 
     if (isStandalone) return;
 
-    // 2. Mostrar el banner siempre después de 2 segundos
-    // Esto asegura que el usuario vea el botón.
+    // 2. Buscar evento global existente (capturado en index.html)
+    if ((window as any).deferredPrompt) {
+      setInstallPrompt((window as any).deferredPrompt);
+      setIsVisible(true);
+    }
+
+    // 3. Escuchar evento si ocurre después
+    const handlePrompt = (e: any) => {
+      e.preventDefault(); // Prevenir banner nativo mini
+      setInstallPrompt(e);
+      (window as any).deferredPrompt = e; // Actualizar global por si acaso
+      setIsVisible(true);
+    };
+
+    window.addEventListener('beforeinstallprompt', handlePrompt);
+
+    // 4. Timer de respaldo para mostrar el banner (UX: mostrar botón siempre)
+    // Pero solo si no se ha detectado ya
     const timer = setTimeout(() => {
       setIsVisible(true);
-    }, 2000);
+    }, 1500);
 
-    return () => clearTimeout(timer);
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handlePrompt);
+      clearTimeout(timer);
+    };
   }, []);
 
   const handleInstallClick = async () => {
-    // Buscar el evento capturado globalmente (en index.html)
-    const promptEvent = (window as any).deferredPrompt;
+    // Intentar obtener el prompt del estado local o del global (respaldo)
+    const promptToUse = installPrompt || (window as any).deferredPrompt;
 
-    if (promptEvent) {
-      // Ejecutar la instalación nativa
-      promptEvent.prompt();
-      
-      const { outcome } = await promptEvent.userChoice;
-      
+    if (promptToUse) {
+      promptToUse.prompt();
+      const { outcome } = await promptToUse.userChoice;
       if (outcome === 'accepted') {
         setIsVisible(false);
-        (window as any).deferredPrompt = null;
       }
+      // Limpiar
+      setInstallPrompt(null);
+      (window as any).deferredPrompt = null;
     } else {
-      // Si el navegador aún no ha disparado el evento (raro, pero posible)
-      alert("La instalación se está preparando. Por favor, intenta de nuevo en unos segundos.");
+      // Si llegamos aquí, el navegador no nos dio el evento.
+      // Puede ser porque ya se intentó, o por políticas del navegador.
+      // Intentamos un reload suave para ver si dispara el evento, 
+      // o mostramos una ayuda visual muy sutil.
+      console.log("Prompt de instalación no disponible aún.");
+      alert("Instalación nativa no disponible en este momento. Intenta recargar o usa el menú del navegador.");
     }
   };
 
