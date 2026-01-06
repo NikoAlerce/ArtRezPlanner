@@ -31,6 +31,7 @@ const App: React.FC = () => {
   const [editingProdDay, setEditingProdDay] = useState<DayProduction | null>(null);
   const [isExporting, setIsExporting] = useState(false);
 
+  // Guardar datos
   useEffect(() => {
     localStorage.setItem('artres_schedule', JSON.stringify(schedule));
   }, [schedule]);
@@ -46,6 +47,32 @@ const App: React.FC = () => {
       localStorage.removeItem('artres_user');
     }
   }, [currentUser]);
+
+  // Gestión de Notificaciones
+  useEffect(() => {
+    const requestNotificationPermission = async () => {
+      if (!('Notification' in window)) {
+        console.log("Este navegador no soporta notificaciones.");
+        return;
+      }
+
+      if (Notification.permission === 'default') {
+        try {
+          const permission = await Notification.requestPermission();
+          if (permission === 'granted') {
+            new Notification("¡Bosque de Gracias!", {
+              body: "Te avisaremos de tus turnos de cuidado.",
+              icon: "https://img.icons8.com/ios-filled/192/1A2F23/pine-tree.png"
+            });
+          }
+        } catch (error) {
+          console.error("Error solicitando notificaciones", error);
+        }
+      }
+    };
+
+    requestNotificationPermission();
+  }, []);
 
   const handleUpdateDay = (updatedDay: DayData) => {
     setSchedule((prev) => ({ ...prev, [updatedDay.id]: updatedDay }));
