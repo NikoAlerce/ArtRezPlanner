@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { ProductionSchedule, Producer, ProductionTask, DayProduction } from '../types';
 
 interface ProductionDashboardProps {
@@ -21,7 +21,7 @@ const ProductionDashboard: React.FC<ProductionDashboardProps> = ({ user, product
     "¡El bosque te agradece! 🌲"
   ];
 
-  const myTasks: { dayId: string, dayName: string, segment: string, label: string, task: ProductionTask }[] = [];
+  const myTasks: { dayId: string, dayName: string, segment: string, label: string, task: ProductionTask, date: string }[] = [];
   
   Object.values(production).forEach((day: DayProduction) => {
     const segments = [
@@ -35,10 +35,39 @@ const ProductionDashboard: React.FC<ProductionDashboardProps> = ({ user, product
     segments.forEach(seg => {
       const task = (day as any)[seg.key];
       if (task?.assignee === user) {
-        myTasks.push({ dayId: day.id, dayName: day.name, segment: seg.key, label: seg.label, task });
+        myTasks.push({ dayId: day.id, dayName: day.name, segment: seg.key, label: seg.label, task, date: day.date });
       }
     });
   });
+
+  const sendLocalNotification = useCallback((title: string, body: string) => {
+    if (Notification.permission === 'granted') {
+      navigator.serviceWorker.ready.then((registration) => {
+        // Fix: Cast options to any to avoid TypeScript error as 'vibrate' is not in standard DOM NotificationOptions
+        registration.showNotification(title, {
+          body,
+          icon: 'https://img.icons8.com/ios-filled/192/1A2F23/pine-tree.png',
+          badge: 'https://img.icons8.com/ios-filled/96/1A2F23/pine-tree.png',
+          vibrate: [200, 100, 200],
+          tag: 'task-reminder'
+        } as any);
+      });
+    }
+  }, []);
+
+  // Verificar tareas de hoy y notificar
+  useEffect(() => {
+    const today = new Date().getDate().toString();
+    const tasksForToday = myTasks.filter(t => t.date === today && !t.task.completed);
+
+    if (tasksForToday.length > 0) {
+      const taskList = tasksForToday.map(t => t.label).join(", ");
+      sendLocalNotification(
+        `¡Hola ${user === 'Nicolás' ? 'Alerce' : user}!`,
+        `Hoy tienes ${tasksForToday.length} tareas pendientes: ${taskList}.`
+      );
+    }
+  }, []);
 
   const completedCount = myTasks.filter(t => t.task.completed).length;
   const totalTasks = myTasks.length;
@@ -76,18 +105,27 @@ const ProductionDashboard: React.FC<ProductionDashboardProps> = ({ user, product
               <p className="text-stone-400 font-bold uppercase tracking-widest text-[9px]">Guardián Bosque</p>
             </div>
           </div>
-          <button 
-            onClick={onLogout} 
-            className="px-6 py-2 rounded-xl border border-stone-100 text-stone-400 hover:text-red-500 hover:bg-red-50/50 transition-all font-bold text-xs"
-          >
-            Salir
-          </button>
+          <div className="flex gap-2">
+            <button 
+              onClick={() => sendLocalNotification("Prueba de Bosque", "Las notificaciones están activas 🌲")}
+              className="px-4 py-2 rounded-xl border border-stone-100 text-[#3a5a6b] hover:bg-stone-50 transition-all font-bold text-xs flex items-center gap-2"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+              Test
+            </button>
+            <button 
+              onClick={onLogout} 
+              className="px-6 py-2 rounded-xl border border-stone-100 text-stone-400 hover:text-red-500 hover:bg-red-50/50 transition-all font-bold text-xs"
+            >
+              Salir
+            </button>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
           <div className="space-y-3">
             <div className="flex justify-between items-end">
-              <span className="text-[10px] font-black text-stone-400 uppercase tracking-widest">Vitalidad</span>
+              <span className="text-[10px] font-black text-stone-400 uppercase tracking-widest">Vitalidad de Labores</span>
               <span className="text-3xl font-black text-[#2d4f3c]">{Math.round(progress)}%</span>
             </div>
             <div className="h-4 w-full bg-stone-100 rounded-full overflow-hidden p-1 shadow-inner border border-stone-50">
@@ -117,20 +155,20 @@ const ProductionDashboard: React.FC<ProductionDashboardProps> = ({ user, product
             className={`group relative text-left p-6 rounded-[2rem] border-2 transition-all duration-500 overflow-hidden ${
               task.completed 
                 ? 'bg-[#f0f4f1]/40 border-[#2d4f3c22]' 
-                : 'bg-white border-stone-50 hover:border-[#3a5a6b] hover:shadow-xl hover:-translate-y-1'
+                : 'bg-white border-stone-100 hover:border-[#3a5a6b] hover:shadow-xl hover:-translate-y-1'
             }`}
           >
             <div className="flex justify-between items-start mb-4">
-              <div className="flex flex-col space-y-1">
-                <span className={`text-[8px] font-black uppercase tracking-[0.2em] ${task.completed ? 'text-[#2d4f3c]' : 'text-stone-300'}`}>
+              <div className="flex flex-col space-y-1.5">
+                <span className={`text-[9px] md:text-[10px] font-black uppercase tracking-[0.2em] ${task.completed ? 'text-[#2d4f3c]' : 'text-[#3a5a6b]'}`}>
                   {dayName} • {label}
                 </span>
                 <h3 className={`text-base font-black leading-tight ${task.completed ? 'text-[#1a2f23] line-through opacity-40' : 'text-[#1a2f23]'}`}>
                   {task.description}
                 </h3>
               </div>
-              <div className={`w-8 h-8 rounded-xl flex items-center justify-center transition-all ${
-                task.completed ? 'bg-[#2d4f3c] text-white shadow-lg' : 'bg-stone-50 text-stone-200 group-hover:bg-[#3a5a6b] group-hover:text-white'
+              <div className={`w-8 h-8 rounded-xl flex items-center justify-center transition-all flex-shrink-0 ${
+                task.completed ? 'bg-[#2d4f3c] text-white shadow-lg' : 'bg-stone-50 text-stone-300 group-hover:bg-[#3a5a6b] group-hover:text-white'
               }`}>
                 {task.completed ? (
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4"><polyline points="20 6 9 17 4 12"></polyline></svg>
@@ -139,8 +177,8 @@ const ProductionDashboard: React.FC<ProductionDashboardProps> = ({ user, product
                 )}
               </div>
             </div>
-            <span className={`text-[8px] font-black uppercase tracking-widest ${task.completed ? 'text-[#2d4f3c]' : 'text-[#3a5a6b] opacity-0 group-hover:opacity-100'}`}>
-              {task.completed ? 'Cuidado' : 'Listo'}
+            <span className={`text-[8px] font-black uppercase tracking-widest ${task.completed ? 'text-[#2d4f3c]' : 'text-[#3a5a6b] opacity-0 group-hover:opacity-100 transition-opacity'}`}>
+              {task.completed ? 'Tarea Realizada' : 'Marcar como Lista'}
             </span>
           </button>
         ))}
