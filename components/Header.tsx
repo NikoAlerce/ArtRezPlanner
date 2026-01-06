@@ -13,8 +13,8 @@ const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onExportImage,
     <header className="mb-6 space-y-4">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-stone-200 pb-4">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 bg-[#1a2f23] rounded-2xl flex items-center justify-center text-white shadow-lg rotate-2">
-             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+          <div className="w-12 h-12 bg-[#1a2f23] rounded-2xl flex items-center justify-center text-white shadow-lg rotate-2 transition-transform hover:rotate-0 duration-300">
+             <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71L12 2z"/></svg>
           </div>
           <div>
             <h1 className="text-2xl md:text-3xl font-black text-[#1a2f23] tracking-tight">Bosque de Gracias</h1>

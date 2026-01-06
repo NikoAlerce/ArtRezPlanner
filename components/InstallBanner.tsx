@@ -50,8 +50,8 @@ const InstallBanner: React.FC = () => {
         <div className="absolute -right-8 -top-8 w-32 h-32 bg-white/5 rounded-full blur-2xl group-hover:bg-white/10 transition-all"></div>
         
         <div className="flex items-center gap-4 relative z-10">
-          <div className="w-14 h-14 bg-white/10 rounded-2xl flex items-center justify-center text-2xl shadow-inner border border-white/5">
-            🌲
+          <div className="w-14 h-14 bg-white/10 rounded-2xl flex items-center justify-center text-white shadow-inner border border-white/5">
+            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71L12 2z"/></svg>
           </div>
           <div className="flex-1">
             <h3 className="font-black text-lg leading-tight tracking-tight">INSTALAR LA APP</h3>
