@@ -2,7 +2,6 @@
 import React, { useState, useEffect } from 'react';
 
 const InstallBanner: React.FC = () => {
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
@@ -13,58 +12,35 @@ const InstallBanner: React.FC = () => {
 
     if (isStandalone) return;
 
-    // 2. Función para activar el banner SOLO si tenemos el prompt real
-    const handlePrompt = (e: any) => {
-      // Guardamos el evento oficial del navegador
-      setDeferredPrompt(e);
-      // Solo AHORA mostramos el banner, porque sabemos que el botón funcionará
+    // 2. Mostrar el banner siempre después de 2 segundos
+    // Esto asegura que el usuario vea el botón.
+    const timer = setTimeout(() => {
       setIsVisible(true);
-    };
+    }, 2000);
 
-    // 3. Revisar si el evento ocurrió antes de que este componente cargara (capturado en index.html)
-    if ((window as any).deferredPrompt) {
-      handlePrompt((window as any).deferredPrompt);
-    }
-
-    // 4. Escuchar si el evento ocurre ahora o en el futuro
-    window.addEventListener('pwa-prompt-ready', () => {
-      if ((window as any).deferredPrompt) {
-        handlePrompt((window as any).deferredPrompt);
-      }
-    });
-
-    // Listener de respaldo directo
-    const rawListener = (e: any) => {
-      e.preventDefault();
-      (window as any).deferredPrompt = e;
-      handlePrompt(e);
-    };
-    window.addEventListener('beforeinstallprompt', rawListener);
-
-    return () => {
-      window.removeEventListener('beforeinstallprompt', rawListener);
-    };
+    return () => clearTimeout(timer);
   }, []);
 
   const handleInstallClick = async () => {
-    if (!deferredPrompt) return;
+    // Buscar el evento capturado globalmente (en index.html)
+    const promptEvent = (window as any).deferredPrompt;
 
-    // Ejecutar la instalación nativa
-    deferredPrompt.prompt();
-    
-    // Esperar resultado
-    const { outcome } = await deferredPrompt.userChoice;
-    
-    // Si aceptó, ocultamos el banner
-    if (outcome === 'accepted') {
-      setIsVisible(false);
-      setDeferredPrompt(null);
-      (window as any).deferredPrompt = null;
+    if (promptEvent) {
+      // Ejecutar la instalación nativa
+      promptEvent.prompt();
+      
+      const { outcome } = await promptEvent.userChoice;
+      
+      if (outcome === 'accepted') {
+        setIsVisible(false);
+        (window as any).deferredPrompt = null;
+      }
+    } else {
+      // Si el navegador aún no ha disparado el evento (raro, pero posible)
+      alert("La instalación se está preparando. Por favor, intenta de nuevo en unos segundos.");
     }
   };
 
-  // Si no es visible (porque no hay prompt), no renderizamos nada.
-  // Esto evita mostrar un botón que no funciona.
   if (!isVisible) return null;
 
   return (
@@ -89,7 +65,7 @@ const InstallBanner: React.FC = () => {
           <div className="flex items-center gap-2">
             <button 
               onClick={handleInstallClick}
-              className="bg-white text-[#1a2f23] px-8 py-3 rounded-2xl font-black text-xs uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-lg whitespace-nowrap cursor-pointer"
+              className="bg-white text-[#1a2f23] px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-lg whitespace-nowrap cursor-pointer"
             >
               Instalar
             </button>
