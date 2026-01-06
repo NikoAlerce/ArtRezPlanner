@@ -2,68 +2,69 @@
 import React, { useState, useEffect } from 'react';
 
 const InstallBanner: React.FC = () => {
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [isVisible, setIsVisible] = useState(false);
-  const [promptReady, setPromptReady] = useState(false);
 
   useEffect(() => {
-    // 1. Verificar si ya está instalada
+    // 1. Verificar si ya está en modo App (Standalone)
     const isStandalone = 
       window.matchMedia('(display-mode: standalone)').matches || 
       (window.navigator as any).standalone === true;
 
     if (isStandalone) return;
 
-    // 2. Función para actualizar el estado según el prompt global
-    const checkPrompt = () => {
-      if ((window as any).deferredPrompt) {
-        setPromptReady(true);
-        setIsVisible(true);
-      }
+    // 2. Función para activar el banner SOLO si tenemos el prompt real
+    const handlePrompt = (e: any) => {
+      // Guardamos el evento oficial del navegador
+      setDeferredPrompt(e);
+      // Solo AHORA mostramos el banner, porque sabemos que el botón funcionará
+      setIsVisible(true);
     };
 
-    // 3. Suscribirse a eventos de prompt listo
-    window.addEventListener('pwa-prompt-ready', checkPrompt);
-    
-    // Revisar si ya existe el prompt (capturado en index.html)
-    checkPrompt();
+    // 3. Revisar si el evento ocurrió antes de que este componente cargara (capturado en index.html)
+    if ((window as any).deferredPrompt) {
+      handlePrompt((window as any).deferredPrompt);
+    }
 
-    // 4. Forzar visibilidad en móviles tras un pequeño delay si no se ha detectado el prompt
-    const timer = setTimeout(() => {
-      const isMobile = /android|iphone|ipad|ipod/i.test(navigator.userAgent.toLowerCase());
-      if (isMobile && !isStandalone) {
-        setIsVisible(true);
+    // 4. Escuchar si el evento ocurre ahora o en el futuro
+    window.addEventListener('pwa-prompt-ready', () => {
+      if ((window as any).deferredPrompt) {
+        handlePrompt((window as any).deferredPrompt);
       }
-    }, 2000);
+    });
+
+    // Listener de respaldo directo
+    const rawListener = (e: any) => {
+      e.preventDefault();
+      (window as any).deferredPrompt = e;
+      handlePrompt(e);
+    };
+    window.addEventListener('beforeinstallprompt', rawListener);
 
     return () => {
-      window.removeEventListener('pwa-prompt-ready', checkPrompt);
-      clearTimeout(timer);
+      window.removeEventListener('beforeinstallprompt', rawListener);
     };
   }, []);
 
   const handleInstallClick = async () => {
-    const deferredPrompt = (window as any).deferredPrompt;
+    if (!deferredPrompt) return;
+
+    // Ejecutar la instalación nativa
+    deferredPrompt.prompt();
     
-    if (deferredPrompt) {
-      console.log('Disparando prompt de instalación...');
-      deferredPrompt.prompt();
-      
-      const { outcome } = await deferredPrompt.userChoice;
-      console.log(`Resultado de instalación: ${outcome}`);
-      
-      if (outcome === 'accepted') {
-        setIsVisible(false);
-        (window as any).deferredPrompt = null;
-      }
-    } else {
-      // Si no hay prompt nativo, no podemos forzarlo, pero intentamos 
-      // avisar al sistema a través de un log. En Android, esto a veces
-      // ayuda a que el navegador muestre su propio banner de "Instalar".
-      console.warn('El navegador aún no permite la instalación automática.');
-      alert("Para instalar, busca 'Instalar aplicación' en el menú de tu navegador (los tres puntos arriba a la derecha).");
+    // Esperar resultado
+    const { outcome } = await deferredPrompt.userChoice;
+    
+    // Si aceptó, ocultamos el banner
+    if (outcome === 'accepted') {
+      setIsVisible(false);
+      setDeferredPrompt(null);
+      (window as any).deferredPrompt = null;
     }
   };
 
+  // Si no es visible (porque no hay prompt), no renderizamos nada.
+  // Esto evita mostrar un botón que no funciona.
   if (!isVisible) return null;
 
   return (
@@ -88,7 +89,7 @@ const InstallBanner: React.FC = () => {
           <div className="flex items-center gap-2">
             <button 
               onClick={handleInstallClick}
-              className="bg-white text-[#1a2f23] px-8 py-3 rounded-2xl font-black text-xs uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-lg whitespace-nowrap"
+              className="bg-white text-[#1a2f23] px-8 py-3 rounded-2xl font-black text-xs uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-lg whitespace-nowrap cursor-pointer"
             >
               Instalar
             </button>

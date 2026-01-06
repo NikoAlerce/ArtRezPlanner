@@ -7,9 +7,10 @@
   "start_url": ".",
   "scope": "/",
   "display": "standalone",
-  "orientation": "any",
+  "orientation": "portrait",
   "background_color": "#fdfaf6",
   "theme_color": "#1a2f23",
+  "prefer_related_applications": false,
   "icons": [
     {
       "src": "https://img.icons8.com/ios-filled/192/1A2F23/pine-tree.png",
