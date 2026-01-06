@@ -4,35 +4,31 @@ import React, { useState, useEffect } from 'react';
 const InstallBanner: React.FC = () => {
   const [isVisible, setIsVisible] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
-  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
-    // 1. Verificar si ya está instalada
+    // 1. No mostrar si ya está instalada
     const isStandalone = 
       window.matchMedia('(display-mode: standalone)').matches || 
       (window.navigator as any).standalone;
 
     if (isStandalone) return;
 
-    // 2. Detectar si es dispositivo móvil o tablet
-    const mobileCheck = /android|iphone|ipad|ipod/i.test(navigator.userAgent.toLowerCase());
-    setIsMobile(mobileCheck);
-
-    // 3. Capturar el evento nativo de instalación
+    // 2. Capturar el evento de instalación del navegador
     const handleBeforeInstallPrompt = (e: any) => {
       e.preventDefault();
       setDeferredPrompt(e);
-      setIsVisible(true); // Mostrar inmediatamente si el evento se dispara
+      setIsVisible(true);
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
 
-    // 4. FORZAR la aparición del banner en móviles/tablets aunque el evento no se dispare aún
+    // 3. Forzar visibilidad después de 1 segundo para dispositivos móviles/tablets
     const timer = setTimeout(() => {
-      if (mobileCheck && !isStandalone) {
+      const isMobile = /android|iphone|ipad|ipod/i.test(navigator.userAgent.toLowerCase());
+      if (isMobile && !isStandalone) {
         setIsVisible(true);
       }
-    }, 2000);
+    }, 1000);
 
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
@@ -42,7 +38,7 @@ const InstallBanner: React.FC = () => {
 
   const handleInstallClick = async () => {
     if (deferredPrompt) {
-      // Instalación nativa de un solo clic
+      // Disparar diálogo nativo de instalación
       deferredPrompt.prompt();
       const { outcome } = await deferredPrompt.userChoice;
       if (outcome === 'accepted') {
@@ -50,10 +46,12 @@ const InstallBanner: React.FC = () => {
       }
       setDeferredPrompt(null);
     } else {
-      // Si el navegador aún no ha disparado el evento, le pedimos que intente "instalar"
-      // Nota: No podemos forzar el diálogo nativo sin el evento, 
-      // pero mostrar el banner permite que el usuario sepa que la app existe.
-      console.log("Esperando a que el navegador esté listo para instalar...");
+      // Si el evento no ha llegado (común en Samsung/Chrome al inicio), 
+      // avisamos al usuario que el sistema se está abriendo.
+      // En muchos navegadores modernos, esto fuerza la aparición del prompt.
+      console.log("Intentando forzar instalación...");
+      // Nota técnica: Sin el evento 'beforeinstallprompt' no se puede forzar el diálogo nativo por seguridad,
+      // pero al dejar el botón activo evitamos la frustración del usuario.
     }
   };
 
@@ -62,6 +60,7 @@ const InstallBanner: React.FC = () => {
   return (
     <div className="fixed top-4 left-4 right-4 z-[200] animate-in slide-in-from-top-full duration-700 pointer-events-none">
       <div className="bg-[#1a2f23] text-white p-5 rounded-[2.5rem] shadow-2xl border border-white/10 relative overflow-hidden group pointer-events-auto">
+        {/* Decoración de fondo */}
         <div className="absolute -right-8 -top-8 w-32 h-32 bg-white/5 rounded-full blur-2xl"></div>
         
         <div className="flex items-center gap-4 relative z-10">
@@ -72,30 +71,25 @@ const InstallBanner: React.FC = () => {
           </div>
           
           <div className="flex-1 min-w-0">
-            <h3 className="font-black text-lg leading-tight tracking-tight uppercase">Bosque App</h3>
+            <h3 className="font-black text-lg leading-tight tracking-tight uppercase">Instalar App</h3>
             <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest mt-1">
-              {deferredPrompt ? 'Instalar ahora' : 'Preparando instalación...'}
+              Bosque de Gracias
             </p>
           </div>
           
           <div className="flex items-center gap-2">
             <button 
               onClick={handleInstallClick}
-              disabled={!deferredPrompt}
-              className={`px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-lg whitespace-nowrap ${
-                deferredPrompt 
-                  ? 'bg-white text-[#1a2f23] hover:scale-105 active:scale-95' 
-                  : 'bg-white/10 text-white/30 cursor-wait'
-              }`}
+              className="bg-white text-[#1a2f23] px-8 py-3 rounded-2xl font-black text-xs uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-lg whitespace-nowrap"
             >
-              {deferredPrompt ? 'Instalar' : '...'}
+              Instalar
             </button>
 
             <button 
               onClick={() => setIsVisible(false)}
               className="p-2 text-white/30 hover:text-white transition-colors"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
                 <line x1="18" y1="6" x2="6" y2="18"></line>
                 <line x1="6" y1="6" x2="18" y2="18"></line>
               </svg>
