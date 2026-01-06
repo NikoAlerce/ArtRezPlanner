@@ -5,6 +5,7 @@ import EditModal from './components/EditModal';
 import EditProductionModal from './components/EditProductionModal';
 import Login from './components/Login';
 import ProductionDashboard from './components/ProductionDashboard';
+import InstallBanner from './components/InstallBanner';
 import { INITIAL_DATA, INITIAL_PRODUCTION_DATA } from './constants';
 import { WeeklySchedule, DayData, ProductionSchedule, DayProduction, Producer } from './types';
 import { toPng } from 'html-to-image';
@@ -135,6 +136,8 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen p-4 md:p-8 max-w-[1600px] mx-auto overflow-x-hidden selection:bg-[#2d4f3c11] relative">
+      <InstallBanner />
+      
       <Header 
         activeTab={activeTab} 
         setActiveTab={setActiveTab} 
