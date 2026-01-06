@@ -97,12 +97,18 @@
       // CAPTURA GLOBAL ROBUSTA
       window.deferredPrompt = null;
       window.addEventListener('beforeinstallprompt', (e) => {
-        // Prevenir que el navegador lo muestre automáticamente para que nosotros controlemos el botón
+        // Prevenimos el prompt por defecto del navegador
         e.preventDefault();
         window.deferredPrompt = e;
-        console.log('Evento de instalación capturado y listo para el botón');
-        // Notificar a la app de React que el botón ahora puede ser "Automático"
-        window.dispatchEvent(new CustomEvent('pwa-can-install'));
+        console.log('✅ Evento beforeinstallprompt capturado correctamente.');
+        // Notificamos a la App de React
+        window.dispatchEvent(new CustomEvent('pwa-ready'));
+      });
+
+      // Manejo de la instalación exitosa
+      window.addEventListener('appinstalled', () => {
+        console.log('🎉 App instalada con éxito');
+        window.deferredPrompt = null;
       });
     </script>
     <script type="importmap">
@@ -119,26 +125,34 @@
     </script>
   </head>
   <body>
-    <div class="fixed inset-0 overflow-hidden pointer-events-none z-0">
-      <div class="forest-particle" style="bottom: -20px; left: 15%; animation: float-forest 12s linear infinite;">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="#2d4f3c11"><path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z"/></svg>
-      </div>
-      <div class="forest-particle" style="bottom: -20px; right: 20%; animation: float-forest 15s linear infinite; animation-delay: 3s;">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="#3a5a6b11"><path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z"/></svg>
-      </div>
-    </div>
-
     <div id="root" class="relative z-10"></div>
     <script type="module" src="./index.tsx"></script>
     
     <script>
+      // REGISTRO SEGURO DEL SERVICE WORKER
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('sw.js', { scope: '/' }).then(reg => {
-            console.log('Service Worker registrado con éxito');
-          }).catch(err => {
-            console.log('Error al registrar SW:', err);
-          });
+          try {
+            // Usamos una ruta puramente relativa para que el navegador la resuelva según el origen actual
+            const swFileName = 'sw.js';
+            const swUrl = new URL(swFileName, window.location.href);
+            
+            // Verificamos que el origen coincida para evitar el error de seguridad "SecurityError"
+            if (swUrl.origin === window.location.origin) {
+              navigator.serviceWorker.register(swFileName)
+                .then(reg => {
+                  console.log('✅ Service Worker registrado en el scope:', reg.scope);
+                })
+                .catch(err => {
+                  // Reportamos como advertencia ya que en entornos de preview es normal que falle
+                  console.warn('⚠️ Registro de SW omitido por el entorno (común en previsualizaciones):', err.message);
+                });
+            } else {
+              console.warn('⚠️ Origen del SW no coincide con la página. Registro cancelado para evitar error.');
+            }
+          } catch (e) {
+            // Silenciamos errores críticos de inicialización de SW
+          }
         });
       }
     </script>

@@ -81,17 +81,17 @@ const App: React.FC = () => {
     setIsExporting(true);
     
     try {
-      // Pequeña pausa para asegurar que el DOM esté estable
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Breve espera para que los estilos de exportación se apliquen al DOM
+      await new Promise(resolve => setTimeout(resolve, 600));
       
       const element = exportRef.current;
       
-      // Forzamos un ancho de escritorio para la captura para que el diseño sea consistente (4 columnas)
+      // Captura en formato apaisado (2000px de ancho)
       const dataUrl = await toPng(element, {
         backgroundColor: '#fdfaf6',
         style: {
-          padding: '40px',
-          width: '1400px', // Forzamos ancho de escritorio
+          padding: '50px',
+          width: '2000px', // Forzamos ancho cinematográfico/apaisado
           height: 'auto',
           transform: 'none',
           overflow: 'visible'
@@ -139,9 +139,9 @@ const App: React.FC = () => {
       />
 
       <main className="relative mt-4 z-10">
-        <div ref={exportRef} className="pb-10">
+        <div ref={exportRef} className={`pb-10 ${isExporting ? 'w-[1900px]' : ''}`}>
           {activeTab === 'artistic' ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <div className={`grid gap-6 ${isExporting ? 'grid-cols-7' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'}`}>
               {daysOrder.map((dayId) => {
                 const day = schedule[dayId];
                 if (!day) return null;
@@ -166,7 +166,7 @@ const App: React.FC = () => {
                            <div className="w-1 h-1 rounded-full bg-orange-400"></div>
                            <span className="text-[9px] font-black uppercase tracking-widest text-orange-600/60">Almuerzo</span>
                         </div>
-                        <p className="text-[#1a2f23] font-serif italic text-base leading-snug">{day.lunch || "..."}</p>
+                        <p className={`text-[#1a2f23] font-serif italic leading-snug ${isExporting ? 'text-sm' : 'text-base'}`}>{day.lunch || "..."}</p>
                       </div>
                       
                       <div className="space-y-1 relative z-10">
@@ -174,7 +174,7 @@ const App: React.FC = () => {
                            <div className="w-1 h-1 rounded-full bg-blue-400"></div>
                            <span className="text-[9px] font-black uppercase tracking-widest text-blue-600/60">Cena</span>
                         </div>
-                        <p className="text-[#1a2f23] font-serif italic text-base leading-snug">{day.dinner || "..."}</p>
+                        <p className={`text-[#1a2f23] font-serif italic leading-snug ${isExporting ? 'text-sm' : 'text-base'}`}>{day.dinner || "..."}</p>
                       </div>
                     </div>
 
@@ -194,19 +194,22 @@ const App: React.FC = () => {
             </div>
           ) : (
             <div className="space-y-10">
-              <ProductionDashboard 
-                user={currentUser!} 
-                production={production} 
-                onToggleTask={handleToggleTask} 
-                onLogout={() => setCurrentUser(null)} 
-              />
+              {/* No mostramos el dashboard en la exportación para que el mapa de labor sea el protagonista */}
+              {!isExporting && (
+                <ProductionDashboard 
+                  user={currentUser!} 
+                  production={production} 
+                  onToggleTask={handleToggleTask} 
+                  onLogout={() => setCurrentUser(null)} 
+                />
+              )}
               
               {/* Mapa de Labor (Vista completa para exportación) */}
-              <section className="glass rounded-[2.5rem] p-8 md:p-12 border border-white/50 shadow-xl overflow-hidden">
+              <section className={`glass rounded-[2.5rem] p-8 md:p-12 border border-white/50 shadow-xl overflow-hidden ${isExporting ? 'border-none shadow-none bg-white' : ''}`}>
                 <div className="flex items-center justify-between mb-8">
                   <div>
                     <h2 className="text-3xl font-black text-[#1a2f23]">Mapa de Labor Semanal</h2>
-                    <p className="text-stone-400 font-bold uppercase tracking-widest text-[10px] mt-1">Cuidado Colectivo del Bosque</p>
+                    <p className="text-stone-400 font-bold uppercase tracking-widest text-[10px] mt-1">Cuidado Colectivo del Bosque de Gracias</p>
                   </div>
                   <div className="flex gap-4">
                     {['Rocío', 'Nicolás', 'Mariano'].map(p => (
@@ -218,7 +221,7 @@ const App: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="overflow-x-auto custom-scrollbar">
+                <div className={`${isExporting ? '' : 'overflow-x-auto custom-scrollbar'}`}>
                   <table className="w-full border-separate border-spacing-2">
                     <thead>
                       <tr>
@@ -228,7 +231,7 @@ const App: React.FC = () => {
                         <th className="p-4 text-[10px] font-black uppercase tracking-widest text-stone-400">Tarde</th>
                         <th className="p-4 text-[10px] font-black uppercase tracking-widest text-stone-400">Cena</th>
                         <th className="p-4 text-[10px] font-black uppercase tracking-widest text-stone-400">Noche</th>
-                        <th className="p-4 print:hidden"></th>
+                        {!isExporting && <th className="p-4 print:hidden"></th>}
                       </tr>
                     </thead>
                     <tbody>
@@ -247,15 +250,17 @@ const App: React.FC = () => {
                                   <span className={`inline-block px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-tighter border ${getAssigneeColor(task.assignee)}`}>
                                     {task.assignee === 'Nicolás' ? 'Alerce' : task.assignee}
                                   </span>
-                                  <p className="text-[11px] font-bold leading-tight text-[#1a2f23]">{task.description}</p>
+                                  <p className={`font-bold leading-tight text-[#1a2f23] ${isExporting ? 'text-[9px]' : 'text-[11px]'}`}>{task.description}</p>
                                 </div>
                               </td>
                             ))}
-                            <td className="p-4 print:hidden opacity-0 group-hover:opacity-100 transition-opacity">
-                               <button onClick={() => setEditingProdDay(day)} className="p-2 text-stone-300 hover:text-[#3a5a6b]">
-                                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-                               </button>
-                            </td>
+                            {!isExporting && (
+                              <td className="p-4 print:hidden opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button onClick={() => setEditingProdDay(day)} className="p-2 text-stone-300 hover:text-[#3a5a6b]">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                                </button>
+                              </td>
+                            )}
                           </tr>
                         );
                       })}
@@ -276,7 +281,7 @@ const App: React.FC = () => {
           <div className="w-16 h-16 mb-4 animate-sway">
              <svg width="64" height="64" viewBox="0 0 24 24" fill="#2d4f3c"><path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71L12 2z"/></svg>
           </div>
-          <p className="text-xs font-black text-[#1a2f23] uppercase tracking-widest animate-pulse">Capturando la esencia del Bosque...</p>
+          <p className="text-xs font-black text-[#1a2f23] uppercase tracking-widest animate-pulse">Generando formato apaisado...</p>
         </div>
       )}
     </div>
